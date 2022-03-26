@@ -560,10 +560,10 @@ mxIBMShapeBase.prototype.getDimensions = function(shape, shapeType, shapeLayout,
 
                 let sidetickWidth = 8;
                 let sidetickHeight = 4;
-                let sidetickLeftStart = -4;
+                let sidetickAlign = -4;
 
-                let multiplicityOffset = 4;
-                let doubleOffset = 3;
+                let multiplicityAlign = 4;
+                let doubleAlign = 3;
 
                 let iconSize = 20;
                 let iconSpacing = 14;
@@ -626,10 +626,10 @@ mxIBMShapeBase.prototype.getDimensions = function(shape, shapeType, shapeLayout,
 
                         sidetickWidth = 4;
                         sidetickHeight = 2;
-                        sidetickLeftStart = -2;
+                        sidetickAlign = -2;
 
-                        multiplicityOffset = 2;
-                        doubleOffset = 2;
+                        multiplicityAlign = 2;
+                        doubleAlign = 2;
 
                         iconSize = 16;
                         iconSpacing = 0;
@@ -643,8 +643,8 @@ mxIBMShapeBase.prototype.getDimensions = function(shape, shapeType, shapeLayout,
                         shapeWidth, shapeHeight, curveRadius, shapeAlign,
                         iconAreaWidth, sidebarWidth, sidebarHeight,
                         labelHeight, labelAlign,
-                        sidetickWidth, sidetickHeight, sidetickLeftStart,
-                        multiplicityOffset, doubleOffset,
+                        sidetickWidth, sidetickHeight, sidetickAlign,
+                        multiplicityAlign, doubleAlign,
                         iconSize, iconAlign,
 			iconAreaHeight
                 };
@@ -727,7 +727,7 @@ mxIBMShapeBase.prototype.getProperties = function(shape, width, height)
 	let tickVisible = shapeType.startsWith('comp');
 	let sidetickWidth = details.sidetickWidth;
 	let sidetickHeight = details.sidetickHeight;
-	let sidetickLeftStart = details.sidetickLeftStart;
+	let sidetickAlign = details.sidetickAlign;
 
 	let badge = mxUtils.getValue(shape.state.style, mxIBMShapeBase.prototype.cst.BADGE, mxIBMShapeBase.prototype.cst.BADGE_DEFAULT);
 	let badgeVisible = (badge != 'none') && (shapeLayout === 'collapsed' || shapeLayout.startsWith('expanded') || shapeLayout === 'itemBadge');
@@ -794,7 +794,7 @@ mxIBMShapeBase.prototype.getProperties = function(shape, width, height)
 		'tickVisible': tickVisible,
 		'sidetickWidth': sidetickWidth,
 		'sidetickHeight': sidetickHeight,
-		'sidetickLeftStart': sidetickLeftStart,
+		'sidetickAlign': sidetickAlign,
 
 		'badge': badge,
 		'badgeVisible': badgeVisible,
@@ -818,8 +818,8 @@ mxIBMShapeBase.prototype.getProperties = function(shape, width, height)
 		'shapeHeight': details.shapeHeight,
 		'curveRadius': details.curveRadius,
 		'shapeAlign': details.shapeAlign,
-		'doubleOffset': details.doubleOffset,
-		'multiplicityOffset': details.multiplicityOffset,
+		'doubleAlign': details.doubleAlign,
+		'multiplicityAlign': details.multiplicityAlign,
 		'iconSize': details.iconSize,
 		'iconAlign': details.iconAlign
 	};
@@ -1131,7 +1131,7 @@ mxIBMShapeBase.prototype.paintCorner = function(c)
 
 	if (pop.cornerVisible)
 	{
-		const doubleStyleOffset = (pop.secondLine) ? pop.doubleOffset : 0;
+		const doubleStyleOffset = (pop.secondLine) ? pop.doubleAlign : 0;
 		c.setFillColor(pop.cornerColor);
 
 		if (pop.shapeType === 'actor')
@@ -1251,7 +1251,7 @@ mxIBMShapeBase.prototype.paintShapeStyle = function(c)
 	let pop = this.shapeProperties;
 
 	if (pop.secondLine) {
-		const doubleStyleOffset = pop.doubleOffset;
+		const doubleStyleOffset = pop.doubleAlign;
 
 		c.save();
 		c.setDashed(false, false);
@@ -1398,9 +1398,9 @@ mxIBMShapeBase.prototype.paintShapeDecoration = function(c)
 		c.save();
 		c.setDashed(false);
 		c.setFillColor(ibmConfig.ibmColors.white);
-		c.rect(pop.sidetickLeftStart, Math.floor(pop.cornerHeight / 4), pop.sidetickWidth, pop.sidetickHeight);
+		c.rect(pop.sidetickAlign, Math.floor(pop.cornerHeight / 4), pop.sidetickWidth, pop.sidetickHeight);
 		c.fillAndStroke();
-		c.rect(pop.sidetickLeftStart, Math.floor((pop.cornerHeight / 3) * 2), pop.sidetickWidth, pop.sidetickHeight);
+		c.rect(pop.sidetickAlign, Math.floor((pop.cornerHeight / 3) * 2), pop.sidetickWidth, pop.sidetickHeight);
 		c.fillAndStroke();
 		c.restore();
 	}
@@ -1510,7 +1510,7 @@ mxIBMShapeBase.prototype.paintShapeMultiplicity = function(c) {
 	let pop = this.shapeProperties;
 
 	if (pop.styleMultiplicity) {
-		let { width, height, radius, space, offset } = { width: pop.shapeWidth, height: pop.shapeHeight, space: pop.multiplicityOffset, radius: pop.curveRadius, offset: pop.shapeAlign };
+		let { width, height, radius, space, offset } = { width: pop.shapeWidth, height: pop.shapeHeight, space: pop.multiplicityAlign, radius: pop.curveRadius, offset: pop.shapeAlign };
 		let numbers = [1, 2];
 
 		c.begin();
