@@ -276,23 +276,23 @@ mxIBMShapeBase.prototype.getLayoutProperties = function(shapeType, shapeLayout, 
 	if (!changed)
 		return properties;
 
-	shapeType = shapeType.current;
-	shapeLayout = shapeLayout.current;
-	hideIcon = hideIcon.current;
+	//shapeType = shapeType.current;
+	//shapeLayout = shapeLayout.current;
+	//hideIcon = hideIcon.current;
 
 	// Prevent invalid changes.
 	
-	if (shapeType.startsWith('group') && shapeLayout === 'collapsed')
+	if (shapeType.current.startsWith('group') && shapeLayout.current === 'collapsed')
 	{
 		shapeLayout = 'expanded';
 		properties = 'ibmLayout=expanded;';
 	}
-	else if (shapeType === 'actor' && shapeLayout.startsWith('expanded'))
+	else if (shapeType.current === 'actor' && shapeLayout.current.startsWith('expanded'))
 	{
 		shapeLayout = 'collapsed';
 		properties = 'ibmLayout=collapsed;';
 	}
-	else if (shapeType === 'target' && shapeLayout === 'expandedStack')
+	else if (shapeType.current === 'target' && shapeLayout.current === 'expandedStack')
 	{
 		shapeLayout = 'expanded';
 		properties = 'ibmLayout=expanded;';
@@ -300,16 +300,16 @@ mxIBMShapeBase.prototype.getLayoutProperties = function(shapeType, shapeLayout, 
 
 	// Get shape-specific properties.
 	
-	if (shapeLayout === "collapsed")
+	if (shapeLayout.current === "collapsed")
 		// Add collapsed label properties, remove expanded stack properties, remove container properties, remove fill.
 		properties += ibmConfig.ibmSystemProperties.collapsedLabel + ibmConfig.ibmSystemProperties.expandedStackNull + 
 				ibmConfig.ibmSystemProperties.containerNull + ibmConfig.ibmSystemProperties.noFill;
-	else if (shapeLayout === "expanded")
+	else if (shapeLayout.current === "expanded")
 	{
-		if (shapeType === 'target')
+		if (shapeType.current === 'target')
 		{
 			// Add expanded label properties, remove container properties, remove expanded stack properties, remove fill.
-			if (hideIcon == 1) 
+			if (hideIcon.current === '1') 
 				properties += ibmConfig.ibmSystemProperties.expandedTargetLabelNoIcon; 
 			else
 				properties += ibmConfig.ibmSystemProperties.expandedTargetLabel;
@@ -322,11 +322,11 @@ mxIBMShapeBase.prototype.getLayoutProperties = function(shapeType, shapeLayout, 
 			properties += ibmConfig.ibmSystemProperties.expandedLabel + ibmConfig.ibmSystemProperties.container + 
 						ibmConfig.ibmSystemProperties.expandedStackNull + ibmConfig.ibmSystemProperties.defaultFill;
 	}
-	else if (shapeLayout === "expandedStack")
+	else if (shapeLayout.current === "expandedStack")
 		// Add expanded label properties, expanded stack properties, add container properties, add default fill.
 		properties += ibmConfig.ibmSystemProperties.expandedLabel + ibmConfig.ibmSystemProperties.expandedStack + 
 				ibmConfig.ibmSystemProperties.container + ibmConfig.ibmSystemProperties.defaultFill;
-	else if (shapeLayout.startsWith('item'))
+	else if (shapeLayout.current.startsWith('item'))
 		// Add item label properties, remove container properties, remove expanded stack properties, remove fill.
 		properties += ibmConfig.ibmSystemProperties.itemLabel + ibmConfig.ibmSystemProperties.containerNull + 
 				ibmConfig.ibmSystemProperties.expandedStackNull + ibmConfig.ibmSystemProperties.noFill;
