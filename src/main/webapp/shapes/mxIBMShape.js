@@ -265,6 +265,22 @@ mxIBMShapeBase.prototype.getDetails = function(shape, shapeType, shapeLayout, sh
         return details;
 }
 
+// Change icon using switch statement in ibmIcons when switching between logical and prescribed.
+mxIBMShapeBase.prototype.switchIcon = function(shapeType, shapeLayout)
+{
+	/* In progress.
+	console.log(this.state.cell.getAttribute('Icon-Name',null));
+	this.state.cell.setAttribute('Icon-Name','ibm-cloud');
+
+	if (previousType.slice(-1) === 'l' && currentType.slice(-1) === 'p')
+		// Lookup logical icon in ibmIcons and switch to prescribed icon if available.
+	else if (previousType.slice(-1) === 'p' && currentType.slice(-1) === 'l')
+		// Lookup prescribed icon in ibmIcons and switch to logical icon if available.
+	*/
+
+	return;
+}
+
 // Get properties corresponding to layout change.
 // Properties are kept minimal by nulling out unused properties when changing layouts.
 // Invalid layout changes revert to original layout.
@@ -275,10 +291,6 @@ mxIBMShapeBase.prototype.getLayoutProperties = function(shapeType, shapeLayout, 
 	let changed = shapeType.isChanged || shapeLayout.isChanged || hideIcon.isChanged;
 	if (!changed)
 		return properties;
-
-	//shapeType = shapeType.current;
-	//shapeLayout = shapeLayout.current;
-	//hideIcon = hideIcon.current;
 
 	// Prevent invalid changes.
 	
@@ -351,6 +363,9 @@ mxIBMShapeBase.prototype.setLayoutStyle = function(cStyleStr, pStyle, cStyle)
 	var shapeLayout = valueStatus(pStyle, cStyle, this.cst.SHAPE_LAYOUT, this.cst.SHAPE_TYPE_LAYOUT);
 	var hideIcon = valueStatus(pStyle, cStyle, this.cst.HIDE_ICON, this.cst.HIDE_ICON_DEFAULT);
 
+	// Change icon if available when switching between logical and prescribed.
+	this.switchIcon(shapeType, shapeLayout);
+
 	// Get properties corresponding to layout change.
 	var properties = this.getLayoutProperties(shapeType, shapeLayout, hideIcon);
 
@@ -369,7 +384,10 @@ mxIBMShapeBase.prototype.setLayoutStyle = function(cStyleStr, pStyle, cStyle)
 mxIBMShapeBase.prototype.getLineProperties = function(styleDashed, styleDouble, styleStrikethrough)
 {
 	let properties = '';
-	let styles = {};
+
+	let changed = styleDashed.isChanged || styleDouble.isChanged || styleStrikethrough.isChanged;
+	if (!changed)
+		return properties;
 
 	// Set properties to the desired change for dashed, double, or strikethrough. 
 	
@@ -415,6 +433,10 @@ mxIBMShapeBase.prototype.setLineStyle = function(cStyleStr, pStyle, cStyle)
 mxIBMShapeBase.prototype.getColorProperties = function(lineColor, fillColor, fontColor, badgeColor)
 {
 	let properties = '';
+
+	let changed = lineColor.isChanged || fillColor.isChanged || fontColor.isChanged || badgeColor.isChanged;
+	if (!changed)
+		return properties;
 
 	let UNUSED_COLOR_NAME = ibmConfig.ibmBaseConstants.UNUSED_COLOR_NAME;
         let LINE_COLOR_NAME = ibmConfig.ibmBaseConstants.LINE_COLOR_NAME;
