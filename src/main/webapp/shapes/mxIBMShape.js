@@ -76,9 +76,9 @@ mxIBMShapeBase.prototype.normalizeFillColor = function(fillColor, lineColor)
 
         if (fillColorName === "NONE")
 		return "none";
-	else if (fillColorName === "White")
+	else if (fillColorName.startsWith("White"))
                 return ibmConfig.ibmColors.white; 
-        else if (fillColorName === "Black" || fillColorName === "Transparent")
+        else if (fillColorName.startsWith("Black") || fillColorName.startsWith("Transparent"))
                 return ibmConfig.ibmColors.none; 
 	else {
                 let lineColorSegments = lineColorName.toLowerCase().split(' ');
@@ -265,18 +265,16 @@ mxIBMShapeBase.prototype.getDetails = function(shape, shapeType, shapeLayout, sh
         return details;
 }
 
-// Get properties corresponding to layout change and convert to styles.
+// Get properties corresponding to layout change.
 // Properties are kept minimal by nulling out unused properties when changing layouts.
 // Invalid layout changes revert to original layout.
-// Properties should in general only be defined in IBMConfig.json.
-mxIBMShapeBase.prototype.getLayoutStyles = function(shapeType, shapeLayout, hideIcon)
+mxIBMShapeBase.prototype.getLayoutProperties = function(shapeType, shapeLayout, hideIcon)
 {
 	let properties = '';
-	let styles = {};
 
 	let changed = shapeType.isChanged || shapeLayout.isChanged || hideIcon.isChanged;
 	if (!changed)
-		return styles;
+		return properties;
 
 	shapeType = shapeType.current;
 	shapeLayout = shapeLayout.current;
@@ -337,46 +335,38 @@ mxIBMShapeBase.prototype.getLayoutStyles = function(shapeType, shapeLayout, hide
 		properties += ibmConfig.ibmSystemProperties.expandedStackNull + ibmConfig.ibmSystemProperties.containerNull +
 				ibmConfig.ibmSystemProperties.noFill;
 
-	// Convert properties to a style dictionary.
-	
-	properties = properties.slice(0, -1); // Remove trailing semicolon.
-
-	let array = properties.split(';');
-
-	for (var index = 0; index < array.length; index++)
-	{
-		element = array[index].split('=');
-		if (element[1] === 'null')
-			styles[element[0]] = null;
-		else	
-			styles[element[0]] = element[1];
-	}
-
-	return styles;
+	return properties;
 }
 
 // Get and set layout style called by event handler.
-// Input:
-//   style = changed event style
-//   shapeType = {previous shape type, current shape type, isChanged boolean}
-//   shapeLayout = {previous shape layout, current shape layout, isChanged boolean}
-//   hideIcon = {previous hide icon setting, current hide icon setting, isChanged boolean}
-// Output:
-//   style = updated style if changed
-mxIBMShapeBase.prototype.setLayoutStyle = function(style, shapeType, shapeLayout, hideIcon)
+mxIBMShapeBase.prototype.setLayoutStyle = function(cStyleStr, pStyle, cStyle)
 {
-	let styles = mxIBMShapeBase.prototype.getLayoutStyles(shapeType, shapeLayout, hideIcon);
+	function valueStatus(pStyle, cStyle, key, keyDefault) {
+		var current = mxUtils.getValue(cStyle, key, keyDefault);
+		var previous = mxUtils.getValue(pStyle, key, keyDefault);
+		return { current, previous, isChanged: current !== previous };
+	}
 
+	var shapeType = valueStatus(pStyle, cStyle, this.cst.SHAPE_TYPE, this.cst.SHAPE_TYPE_DEFAULT);
+	var shapeLayout = valueStatus(pStyle, cStyle, this.cst.SHAPE_LAYOUT, this.cst.SHAPE_TYPE_LAYOUT);
+	var hideIcon = valueStatus(pStyle, cStyle, this.cst.HIDE_ICON, this.cst.HIDE_ICON_DEFAULT);
+
+	// Get properties corresponding to layout change.
+	var properties = this.getLayoutProperties(shapeType, shapeLayout, hideIcon);
+
+	// Convert properties to a style dictionary.
+        var styles = getStylesObj(properties);
+
+	// Update cStyleStr with updated styles.
 	for (let key in styles) 
-		style = mxUtils.setStyle(style, key, styles[key]);
+		cStyleStr = mxUtils.setStyle(cStyleStr, key, styles[key]);
 
-	return style;
+	return cStyleStr;
 };
 
-// Get styles for shape style changes ensuring only one of dashed, double, or strikethrough is set at time, 
+// Get properties for line style change ensuring only one of dashed, double, or strikethrough is set at time, 
 // for example if user previously selected dashed and later selects double then dashed is auto-deselected.
-// Properties should in general only be defined in IBMConfig.json.
-mxIBMShapeBase.prototype.getStyleStyles = function(styleDashed, styleDouble, styleStrikethrough)
+mxIBMShapeBase.prototype.getLineProperties = function(styleDashed, styleDouble, styleStrikethrough)
 {
 	let properties = '';
 	let styles = {};
@@ -384,77 +374,152 @@ mxIBMShapeBase.prototype.getStyleStyles = function(styleDashed, styleDouble, sty
 	// Set properties to the desired change for dashed, double, or strikethrough. 
 	
 	if (styleDashed.isChanged)
-		properties = (styleDashed.current == 1) ? ibmConfig.ibmSystemProperties.styleDashedOn : ibmConfig.ibmSystemProperties.styleDashedOff;
+		properties = (styleDashed.current === '1') ? ibmConfig.ibmSystemProperties.styleDashedOn : ibmConfig.ibmSystemProperties.styleDashedOff;
 
 	if (styleDouble.isChanged)
-		properties = (styleDouble.current == 1) ? ibmConfig.ibmSystemProperties.styleDoubleOn : ibmConfig.ibmSystemProperties.styleDoubleOff;
+		properties = (styleDouble.current === '1') ? ibmConfig.ibmSystemProperties.styleDoubleOn : ibmConfig.ibmSystemProperties.styleDoubleOff;
 
 	if (styleStrikethrough.isChanged)
-		properties = (styleStrikethrough.current == 1) ? ibmConfig.ibmSystemProperties.styleStrikethroughOn : ibmConfig.ibmSystemProperties.styleStrikethroughOff;
+		properties = (styleStrikethrough.current === '1') ? ibmConfig.ibmSystemProperties.styleStrikethroughOn : ibmConfig.ibmSystemProperties.styleStrikethroughOff;
 
-	// Convert properties to a style dictionary.
-	
-	properties = properties.slice(0, -1); // Remove trailing semicolon.
+	return properties;
+}
 
-	let array = properties.split(';');
-
-	for (var index = 0; index < array.length; index++)
-	{
-		element = array[index].split('=');
-		if (element[1] === 'null')
-			styles[element[0]] = null;
-		else	
-			styles[element[0]] = element[1];
+// Get and set line style (dashed, double, strikethrough) called by event handler.
+mxIBMShapeBase.prototype.setLineStyle = function(cStyleStr, pStyle, cStyle)
+{
+	function valueStatus(pStyle, cStyle, key, keyDefault) {
+		var current = mxUtils.getValue(cStyle, key, keyDefault);
+		var previous = mxUtils.getValue(pStyle, key, keyDefault);
+		return { current, previous, isChanged: current !== previous };
 	}
 
-	return styles;
-}
+	var styleDashed = valueStatus(pStyle, cStyle, this.cst.STYLE_DASHED, this.cst.STYLE_DASHED_DEFAULT);
+	var styleDouble = valueStatus(pStyle, cStyle, this.cst.STYLE_DOUBLE, this.cst.STYLE_DOUBLE_DEFAULT);
+	var styleStrikethrough = valueStatus(pStyle, cStyle, this.cst.STYLE_STRIKETHROUGH, this.cst.STYLE_STRIKETHROUGH_DEFAULT);
 
-// Get and set shape style called by event handler.
-// Input:
-//   style = changed event style
-//   styleDashed = {previous dashed setting, current dashed setting, isChanged boolean}
-//   styleDouble = {previous double setting, current double setting, isChanged boolean}
-//   styleStrikethrough = {previous strikethrough setting, current strikethrough setting, isChanged boolean}
-// Output:
-//   style = updated style if changed
-mxIBMShapeBase.prototype.setStyleStyle = function(style, styleDashed, styleDouble, styleStrikethrough)
-{
-	let styles = mxIBMShapeBase.prototype.getStyleStyles(styleDashed, styleDouble, styleStrikethrough);
+	// Get properties corresponding to line style change.
+	var properties = this.getLineProperties(styleDashed, styleDouble, styleStrikethrough);
 
+	// Convert properties to a style dictionary.
+        var styles = getStylesObj(properties);
+
+	// Update cStyleStr with updated styles.
 	for (let key in styles) 
-		style = mxUtils.setStyle(style, key, styles[key]);
+		cStyleStr = mxUtils.setStyle(cStyleStr, key, styles[key]);
 
-	return style;
+	return cStyleStr;
 }
 
-// Get and set color style to ensure proper usage with the IBM Color Palette.
-// Properties should in general only be defined in IBMConfig.json.
-mxIBMShapeBase.prototype.getColorStyles = function(lineColor, fillColor, fontColor, badgeColor)
+// Get properties for color change ensuring proper use of IBM Color Palette.
+mxIBMShapeBase.prototype.getColorProperties = function(lineColor, fillColor, fontColor, badgeColor)
 {
 	let properties = '';
-	let styles = {};
 
-	// In progress.
-	
-	return null;
+	let UNUSED_COLOR_NAME = ibmConfig.ibmBaseConstants.UNUSED_COLOR_NAME;
+        let LINE_COLOR_NAME = ibmConfig.ibmBaseConstants.LINE_COLOR_NAME;
+        let FILL_COLOR_NAME = ibmConfig.ibmBaseConstants.FILL_COLOR_NAME;
+        let FONT_COLOR_NAME = ibmConfig.ibmBaseConstants.FONT_COLOR_NAME;
+
+        if (lineColor.isChanged)
+        {
+                let lineColorHex = mxIBMShapeBase.prototype.rgb2hex(lineColor.current);
+                let lineColorUpper = lineColorHex.toUpperCase();
+                let lineColorName = ibmConfig.colorNames[lineColorUpper.substring(1)];
+
+                if (!lineColorName || lineColorName.indexOf(LINE_COLOR_NAME) === -1)
+                {
+                        lineColor.current = lineColor.previous;
+                        properties += 'strokeColor=' + lineColor.previous + ';';
+                }
+                else
+                {
+                        if (shapeLayout.previous.startsWith('expanded') && shapeType.previous != 'target')
+                        {
+                                fillColor.isChanged = false;
+                                fillColor.previous = 'default';
+                                properties += ibmConfig.ibmSystemProperties.defaultFill;
+                        }
+                        else
+                        {
+                                fillColor.isChanged = false;
+                                fillColor.previous = 'none';
+                                properties += ibmConfig.ibmSystemProperties.noFill;
+                        }
+                }
+        }
+
+        if (fillColor.isChanged)
+        {
+                let fillColorHex = this.rgb2hex(fillColor.current);
+                let fillColorUpper = fillColorHex.toUpperCase();
+                let fillColorName = ibmConfig.colorNames[fillColorUpper.substring(1)];
+
+                let lineColorHex = this.rgb2hex(lineColor.current);
+                let lineColorUpper = lineColorHex.toUpperCase();
+                let lineColorName = ibmConfig.colorNames[lineColorUpper.substring(1)];
+
+                if (!fillColorName || fillColorName.indexOf(FILL_COLOR_NAME) === -1 ||
+                                      fillColorName.search(/[0-9]/) != lineColorName.search(/[0-9]/))
+                {
+                        fillColor.current = fillColor.previous;
+                        properties += 'fillColor=' + fillColor.previous + ';';
+                }
+        }
+
+        if (fontColor.isChanged)
+        {
+                let fontColorHex = mxIBMShapeBase.prototype.rgb2hex(fontColor.current);
+                let fontColorUpper = colorHex.toUpperCase();
+                let fontColorName = ibmConfig.colorNames[fontColorUpper.substring(1)];
+
+                if (!fontColorName || fontColorName.indexOf(TEXT_COLOR_NAME) === -1)
+                {
+                        fontColor.current = fontColor.previous;
+                        properties += 'fontColor=' + fontColor.previous + ';';
+                }
+        }
+
+        if (badgeColor.isChanged)
+        {
+                let badgeColorHex = mxIBMShapeBase.prototype.rgb2hex(badgeColor.current);
+                let badgeColorUpper = badgeColorHex.toUpperCase();
+                let badgeColorName = ibmConfig.colorNames[badgeColorUpper.substring(1)];
+
+                if (!badgeColorName || badgeColorName.indexOf(UNUSED_COLOR_NAME) >= 0 ||
+                                       badgeColorName.indexOf(FILL_COLOR_NAME) >= 0)
+                {
+                        badgeColor.current = badgeColor.previous;
+                        properties += 'ibmBadgeColor=' + badgeColor.previous + ';';
+                }
+        }
+
+	return properties;
 }
 
 // Get and set color style called by event handler.
-// Input:
-//   style = changed event style
-//   lineColor = {previous line color, current line color, isChanged boolean}
-//   fillColor = {previous fill color, current fill color, isChanged boolean}
-//   fontColor = {previous font color, current font color, isChanged boolean}
-//   badgeColor = {previous badge color, current badge color, isChanged boolean}
-// Output:
-//   style = updated style if changed
-mxIBMShapeBase.prototype.setColorStyle = function(style, lineColor, fillColor, fontColor, badgeColor)
+mxIBMShapeBase.prototype.setColorStyle = function(cStyleStr, pStyle, cStyle)
 {
-	let styles = mxIBMShapeBase.prototype.getColorStyles(lineColor, fillColor, fontColor, badgeColor);
+	function valueStatus(pStyle, cStyle, key, keyDefault) {
+		var current = mxUtils.getValue(cStyle, key, keyDefault);
+		var previous = mxUtils.getValue(pStyle, key, keyDefault);
+		return { current, previous, isChanged: current !== previous };
+	}
 
+	var lineColor = valueStatus(pStyle, cStyle, this.cst.LINE_COLOR, this.cst.LINE_COLOR_DEFAULT);
+        var fillColor = valueStatus(pStyle, cStyle, this.cst.FILL_COLOR, this.cst.FILL_COLOR_DEFAULT);
+        var fontColor = valueStatus(pStyle, cStyle, this.cst.FONT_COLOR, this.cst.FONT_COLOR_DEFAULT);
+        var badgeColor = valueStatus(pStyle, cStyle, this.cst.BADGE_COLOR, this.cst.BADGE_COLOR_DEFAULT);
+
+	// Get properties corresponding to color change.
+	var properties = this.getColorProperties(lineColor, fillColor, fontColor, badgeColor);
+
+	// Convert properties to a style dictionary.
+        var styles = getStylesObj(properties);
+
+	// Update cStyleStr with updated styles.
 	for (let key in styles) 
-		style = mxUtils.setStyle(style, key, styles[key]);
+		cStyleStr = mxUtils.setStyle(cStyleStr, key, styles[key]);
 
 	return style;
 }
@@ -821,9 +886,15 @@ mxIBMShapeBase.prototype.handleEvents = function()
 				{
 					const style = { current: evt.properties.change.style, previous: evt.properties.change.previous };
 					const isIBMShape = (style.current.indexOf(mxIBMShapeBase.prototype.cst.SHAPE) > 0);
+
 				  	const iconImage = (style.previous.indexOf(mxIBMShapeBase.prototype.cst.SHAPE) > 0 &&
 		  		        			style.current.indexOf("image") > 0);
 
+					var pStyleStr = evt.properties.change.previous;  // COMPAT
+					var cStyleStr = evt.properties.change.style;  // COMPAT
+					var pStyle = getStylesObj(pStyleStr);  // COMPAT
+					var cStyle = getStylesObj(cStyleStr);  // COMPAT
+					
 					if (isIBMShape || iconImage)
 					{
 						const shapeType = valueStatus(style, mxIBMShapeBase.prototype.cst.SHAPE_TYPE);
@@ -834,25 +905,53 @@ mxIBMShapeBase.prototype.handleEvents = function()
 						const styleDouble = valueStatus(style, mxIBMShapeBase.prototype.cst.STYLE_DOUBLE);
 						const styleStrikethrough = valueStatus(style, mxIBMShapeBase.prototype.cst.STYLE_STRIKETHROUGH);
 
+						const lineColor = valueStatus(style, mxIBMShapeBase.prototype.cst.LINE_COLOR);
+                                                const fillColor = valueStatus(style, mxIBMShapeBase.prototype.cst.FILL_COLOR);
+                                                const fontColor = valueStatus(style, mxIBMShapeBase.prototype.cst.FONT_COLOR);
+                                                const badgeColor = valueStatus(style, mxIBMShapeBase.prototype.cst.BADGE_COLOR);
+
+						/*
+                                                var colorChanged = lineColor.isChanged || fillColor.isChanged || fontColor.isChanged || badgeColor.isChanged;
+                                                if (colorChanged)
+                                                {
+                                                        console.log("begin color changed");
+                                                        var styleNewColor = style.current;
+                                                        var updatedStyle = mxIBMShapeBase.prototype.getColorStyle(styleNewColor, shapeType, shapeLayout, lineColor, fillColor, fontColor, badgeColor);
+                                                        styleNewColor = updatedStyle.style;
+                                                        //shapeType.current = updatedStyle.shapeType.current;
+                                                        //shapeLayout.current = updatedStyle.shapeLayout.current;
+                                                        //lineColor.current = updatedStyle.lineColor.current;
+                                                        //fillColor.current = updatedStyle.fillColor.current;
+                                                        //fontColor.current = updatedStyle.fontColor.current;
+                                                        //badgeColor.current = updatedStyle.badgeColor.current;
+                                                        colorChanged = style.current !== styleNewColor;
+                                                        console.log("end color changed");
+                                                }
+						*/
+
 						var styleChanged = styleDashed.isChanged || styleDouble.isChanged || styleStrikethrough.isChanged;
 						if (styleChanged)
 						{
-							var styleNewStyle = style.current;
-							var updatedStyle = mxIBMShapeBase.prototype.getStyleStyle(styleNewStyle, styleDashed, styleDouble, styleStrikethrough);
+							//var styleNewStyle = style.current;
+							//var updatedStyle = mxIBMShapeBase.prototype.getStyleStyle(styleNewStyle, styleDashed, styleDouble, styleStrikethrough);
+							var styleNewStyle = cStyleStr;  // COMPAT
+							var updatedStyle = mxIBMShapeBase.prototype.getLineStyle(styleNewStyle, pStyle, cStyle);  // COMPAT
 							styleNewStyle = updatedStyle.style;
-							styleDashed.current = updatedStyle.styleDashed;
-							styleDouble.current = updatedStyle.styleDouble;
-							styleStrikethrough.current = updatedStyle.styleStrikethrough;
+							// COMPAT styleDashed.current = updatedStyle.styleDashed;
+							// COMPAT styleDouble.current = updatedStyle.styleDouble;
+							// COMPAT styleStrikethrough.current = updatedStyle.styleStrikethrough;
 							styleChanged = style.current !== styleNewStyle;
 						}
 
 						var needApplyStyle = shapeType.isChanged || shapeLayout.isChanged || hideIcon.isChanged || iconImage;
 						if (needApplyStyle)
 						{
-							var styleNew = style.current;
-							var updatedStyle = mxIBMShapeBase.prototype.getLayoutStyle(styleNew, shapeType, shapeLayout, hideIcon, iconImage);
+							//var styleNew = style.current;
+							//var updatedStyle = mxIBMShapeBase.prototype.getLayoutStyle(styleNew, shapeType, shapeLayout, hideIcon, iconImage);
+							var styleNew = cStyleStr;  // COMPAT
+							var updatedStyle = mxIBMShapeBase.prototype.getLayoutStyle(styleNew, pStyle, cStyle, iconImage);  // COMPAT
 							styleNew = updatedStyle.style;
-							shapeLayout.current = updatedStyle.shapeLayout.current;
+							// COMPAT shapeLayout.current = updatedStyle.shapeLayout.current;
 							needApplyStyle = style.current !== styleNew;
 						}
 						
@@ -1524,21 +1623,28 @@ mxIBMShapeBase.prototype.getStyle = function(style, shapeType, shapeLayout, layo
 }
 */
 
-mxIBMShapeBase.prototype.getLayoutStyle = function(style, shapeType, shapeLayout, hideIcon, iconImage)
+//mxIBMShapeBase.prototype.getLayoutStyle = function(style, shapeType, shapeLayout, hideIcon, iconImage)
+mxIBMShapeBase.prototype.getLayoutStyle = function(cStyleStr, pStyle, cStyle, iconImage)  // COMPAT
 {	
 	if (iconImage)
-		style = mxUtils.setStyle(style, 'shape', mxIBMShapeBase.prototype.cst.SHAPE);
+		style = mxUtils.setStyle(cStyleStr, 'shape', mxIBMShapeBase.prototype.cst.SHAPE); // COMPAT
+		// style = mxUtils.setStyle(style, 'shape', mxIBMShapeBase.prototype.cst.SHAPE);
 
-	style = mxIBMShapeBase.prototype.setLayoutStyle(style, shapeType, shapeLayout, hideIcon);
+	//style = mxIBMShapeBase.prototype.setLayoutStyle(style, shapeType, shapeLayout, hideIcon);
+	style = mxIBMShapeBase.prototype.setLayoutStyle(cStyleStr, pStyle, cStyle);  // COMPAT
 
-	return {style, shapeLayout};
+	//return {style, shapeLayout};
+	return {style};  // COMPAT
 }
 
-mxIBMShapeBase.prototype.getStyleStyle = function(style, styleDashed, styleDouble, styleStrikethrough)
+//mxIBMShapeBase.prototype.getStyleStyle = function(style, styleDashed, styleDouble, styleStrikethrough)
+mxIBMShapeBase.prototype.getLineStyle = function(cStyleStr, pStyle, cStyle) // COMPAT
 {
-	style = mxIBMShapeBase.prototype.setStyleStyle(style, styleDashed, styleDouble, styleStrikethrough);
+	//style = mxIBMShapeBase.prototype.setStyleStyle(style, styleDashed, styleDouble, styleStrikethrough);
+	style = mxIBMShapeBase.prototype.setLineStyle(cStyleStr, pStyle, cStyle); // COMPAT
 
-	return {style, styleDashed, styleDouble, styleStrikethrough};
+	//return {style, styleDashed, styleDouble, styleStrikethrough};
+	return {style};  // COMPAT
 }
 
 /*
@@ -2124,3 +2230,28 @@ mxIBMShapeUnit.prototype.getLabelBounds = function(rect)
 mxCellRenderer.registerShape(mxIBMShapeBase.prototype.cst.SHAPE, mxIBMShapeBase);
 mxCellRenderer.registerShape(mxIBMShapeLegend.prototype.cst.SHAPE, mxIBMShapeLegend);
 mxCellRenderer.registerShape(mxIBMShapeUnit.prototype.cst.SHAPE, mxIBMShapeUnit);
+
+//**********************************************************************************************************************************************************
+// Common Functions
+//**********************************************************************************************************************************************************
+function getStylesObj(stylesStr) {
+	var styles = {};
+	stylesStr = stylesStr.slice(0, -1); // Remove trailing semicolon.
+	let array = stylesStr.split(';');
+	for (var index = 0; index < array.length; index++) {
+		element = array[index].split('=');
+		if (element[1] === 'null')
+			styles[element[0]] = null;
+		else
+			styles[element[0]] = element[1];
+	}
+	return styles;
+}
+
+function getStylesStr(stylesObj) {
+	var stylesStr = '';
+	for (var key in stylesObj) {
+		stylesStr += key + '=' + stylesObj[key] + ';'
+	}
+	return stylesStr
+} 
