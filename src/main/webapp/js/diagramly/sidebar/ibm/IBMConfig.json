@@ -176,7 +176,7 @@
               {"val": "#a2191f", "dispName": "Dark Red"}, 
 	      {"val": "#005d5d", "dispName": "Dark Teal"},
 	      {"val": "#4d5358", "dispName": "Dark Cool Gray"}] },
-	{"name": "ibmRotation", "dispName": "Rotate Icon", "min": 0, "max": 359, "defVal": 0},
+	{"name": "ibmRotation", "dispName": "Rotate Icon", "type": "int", "min": 0, "max": 359, "defVal": 0},
         {"name": "ibmNoIcon", "dispName": "Hide Icon", "type": "bool", "defVal": "false"},
         {"name": "ibmMultiplicity", "dispName": "Multiplicity", "type": "bool", "defVal": "false"},
         {"name": "ibmDashed", "dispName": "Dashed Line", "type": "bool", "defVal": "false"},

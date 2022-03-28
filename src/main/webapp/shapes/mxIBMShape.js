@@ -266,7 +266,7 @@ mxIBMShapeBase.prototype.getDetails = function(shape, shapeType, shapeLayout, sh
 }
 
 // Build object for current and previous values.
-mxIBMShapeBase.prototype.getValueStatus = function(pStyle, cStyle, key, keyDefault) 
+mxIBMShapeBase.prototype.getStyleValues = function(pStyle, cStyle, key, keyDefault) 
 {
 	var current = mxUtils.getValue(cStyle, key, keyDefault);
 	var previous = mxUtils.getValue(pStyle, key, keyDefault);
@@ -394,9 +394,9 @@ mxIBMShapeBase.prototype.getLayoutProperties = function(shapeType, shapeLayout, 
 // Get and set layout style called by event handler.
 mxIBMShapeBase.prototype.setLayoutStyle = function(cStyleStr, pStyle, cStyle)
 {
-	var shapeType = this.getValueStatus(pStyle, cStyle, this.cst.SHAPE_TYPE, this.cst.SHAPE_TYPE_DEFAULT);
-	var shapeLayout = this.getValueStatus(pStyle, cStyle, this.cst.SHAPE_LAYOUT, this.cst.SHAPE_TYPE_LAYOUT);
-	var hideIcon = this.getValueStatus(pStyle, cStyle, this.cst.HIDE_ICON, this.cst.HIDE_ICON_DEFAULT);
+	var shapeType = this.getStyleValues(pStyle, cStyle, this.cst.SHAPE_TYPE, this.cst.SHAPE_TYPE_DEFAULT);
+	var shapeLayout = this.getStyleValues(pStyle, cStyle, this.cst.SHAPE_LAYOUT, this.cst.SHAPE_TYPE_LAYOUT);
+	var hideIcon = this.getStyleValues(pStyle, cStyle, this.cst.HIDE_ICON, this.cst.HIDE_ICON_DEFAULT);
 
 	// Change icon if available when switching between logical and prescribed.
 	this.switchIcon(shapeType, shapeLayout);
@@ -440,9 +440,9 @@ mxIBMShapeBase.prototype.getLineProperties = function(styleDashed, styleDouble, 
 // Get and set line style (dashed, double, strikethrough) called by event handler.
 mxIBMShapeBase.prototype.setLineStyle = function(cStyleStr, pStyle, cStyle)
 {
-	var styleDashed = this.getValueStatus(pStyle, cStyle, this.cst.STYLE_DASHED, this.cst.STYLE_DASHED_DEFAULT);
-	var styleDouble = this.getValueStatus(pStyle, cStyle, this.cst.STYLE_DOUBLE, this.cst.STYLE_DOUBLE_DEFAULT);
-	var styleStrikethrough = this.getValueStatus(pStyle, cStyle, this.cst.STYLE_STRIKETHROUGH, this.cst.STYLE_STRIKETHROUGH_DEFAULT);
+	var styleDashed = this.getStyleValues(pStyle, cStyle, this.cst.STYLE_DASHED, this.cst.STYLE_DASHED_DEFAULT);
+	var styleDouble = this.getStyleValues(pStyle, cStyle, this.cst.STYLE_DOUBLE, this.cst.STYLE_DOUBLE_DEFAULT);
+	var styleStrikethrough = this.getStyleValues(pStyle, cStyle, this.cst.STYLE_STRIKETHROUGH, this.cst.STYLE_STRIKETHROUGH_DEFAULT);
 
 	// Get properties corresponding to line style change.
 	var properties = this.getLineProperties(styleDashed, styleDouble, styleStrikethrough);
@@ -456,6 +456,7 @@ mxIBMShapeBase.prototype.setLineStyle = function(cStyleStr, pStyle, cStyle)
 	return cStyleStr;
 }
 
+// Get name of color from rbg/hex value.
 mxIBMShapeBase.prototype.getColorName = function(color)
 {
         var colorHex = this.rgb2hex(color);
@@ -577,14 +578,14 @@ mxIBMShapeBase.prototype.getColorProperties = function(shapeType, shapeLayout, l
 // Get and set color style called by event handler.
 mxIBMShapeBase.prototype.setColorStyle = function(cStyleStr, pStyle, cStyle)
 {
-	var shapeType = this.getValueStatus(pStyle, cStyle, this.cst.SHAPE_TYPE, this.cst.SHAPE_TYPE_DEFAULT);
-	var shapeLayout = this.getValueStatus(pStyle, cStyle, this.cst.SHAPE_LAYOUT, this.cst.SHAPE_TYPE_LAYOUT);
-        var container = this.getValueStatus(pStyle, cStyle, this.cst.CONTAINER, this.cst.CONTAINER_DEFAULT);
+	var shapeType = this.getStyleValues(pStyle, cStyle, this.cst.SHAPE_TYPE, this.cst.SHAPE_TYPE_DEFAULT);
+	var shapeLayout = this.getStyleValues(pStyle, cStyle, this.cst.SHAPE_LAYOUT, this.cst.SHAPE_TYPE_LAYOUT);
+        var container = this.getStyleValues(pStyle, cStyle, this.cst.CONTAINER, this.cst.CONTAINER_DEFAULT);
 
-	var lineColor = this.getValueStatus(pStyle, cStyle, this.cst.LINE_COLOR, this.cst.LINE_COLOR_DEFAULT);
-        var fillColor = this.getValueStatus(pStyle, cStyle, this.cst.FILL_COLOR, this.cst.FILL_COLOR_DEFAULT);
-        var fontColor = this.getValueStatus(pStyle, cStyle, this.cst.FONT_COLOR, this.cst.FONT_COLOR_DEFAULT);
-        var badgeColor = this.getValueStatus(pStyle, cStyle, this.cst.BADGE_COLOR, this.cst.BADGE_COLOR_DEFAULT);
+	var lineColor = this.getStyleValues(pStyle, cStyle, this.cst.LINE_COLOR, this.cst.LINE_COLOR_DEFAULT);
+        var fillColor = this.getStyleValues(pStyle, cStyle, this.cst.FILL_COLOR, this.cst.FILL_COLOR_DEFAULT);
+        var fontColor = this.getStyleValues(pStyle, cStyle, this.cst.FONT_COLOR, this.cst.FONT_COLOR_DEFAULT);
+        var badgeColor = this.getStyleValues(pStyle, cStyle, this.cst.BADGE_COLOR, this.cst.BADGE_COLOR_DEFAULT);
 
 	// Get properties corresponding to color change.
 	var properties = this.getColorProperties(shapeType, shapeLayout, lineColor, fillColor, fontColor, badgeColor, container);
@@ -947,28 +948,28 @@ mxIBMShapeBase.prototype.handleEvents = function()
 					
 					if (isIBMShape || iconImage)
 					{
-						//const shapeType = this.getValueStatus(style, mxIBMShapeBase.prototype.cst.SHAPE_TYPE);
-						//const shapeLayout = this.getValueStatus(style, mxIBMShapeBase.prototype.cst.SHAPE_LAYOUT);
-						//const hideIcon = this.getValueStatus(style, mxIBMShapeBase.prototype.cst.HIDE_ICON);
-						const shapeType = this.getValueStatus(pStyle, cStyle, this.cst.SHAPE_TYPE, this.cst.SHAPE_TYPE_DEFAULT);
-						const shapeLayout = this.getValueStatus(pStyle, cStyle, this.cst.SHAPE_LAYOUT, this.cst.SHAPE_TYPE_LAYOUT);
-						const hideIcon = this.getValueStatus(pStyle, cStyle, this.cst.HIDE_ICON, this.cst.HIDE_ICON_DEFAULT);
+						//const shapeType = this.getStyleValues(style, mxIBMShapeBase.prototype.cst.SHAPE_TYPE);
+						//const shapeLayout = this.getStyleValues(style, mxIBMShapeBase.prototype.cst.SHAPE_LAYOUT);
+						//const hideIcon = this.getStyleValues(style, mxIBMShapeBase.prototype.cst.HIDE_ICON);
+						const shapeType = this.getStyleValues(pStyle, cStyle, this.cst.SHAPE_TYPE, this.cst.SHAPE_TYPE_DEFAULT);
+						const shapeLayout = this.getStyleValues(pStyle, cStyle, this.cst.SHAPE_LAYOUT, this.cst.SHAPE_TYPE_LAYOUT);
+						const hideIcon = this.getStyleValues(pStyle, cStyle, this.cst.HIDE_ICON, this.cst.HIDE_ICON_DEFAULT);
 
-						//const styleDashed = this.getValueStatus(style, mxIBMShapeBase.prototype.cst.STYLE_DASHED);
-						//const styleDouble = this.getValueStatus(style, mxIBMShapeBase.prototype.cst.STYLE_DOUBLE);
-						//const styleStrikethrough = this.getValueStatus(style, mxIBMShapeBase.prototype.cst.STYLE_STRIKETHROUGH);
-						const styleDashed = this.getValueStatus(pStyle, cStyle, this.cst.STYLE_DASHED, this.cst.STYLE_DASHED_DEFAULT);
-						const styleDouble = this.getValueStatus(pStyle, cStyle, this.cst.STYLE_DOUBLE, this.cst.STYLE_DOUBLE_DEFAULT);
-						const styleStrikethrough = this.getValueStatus(pStyle, cStyle, this.cst.STYLE_STRIKETHROUGH, this.cst.STYLE_STRIKETHROUGH_DEFAULT);
+						//const styleDashed = this.getStyleValues(style, mxIBMShapeBase.prototype.cst.STYLE_DASHED);
+						//const styleDouble = this.getStyleValues(style, mxIBMShapeBase.prototype.cst.STYLE_DOUBLE);
+						//const styleStrikethrough = this.getStyleValues(style, mxIBMShapeBase.prototype.cst.STYLE_STRIKETHROUGH);
+						const styleDashed = this.getStyleValues(pStyle, cStyle, this.cst.STYLE_DASHED, this.cst.STYLE_DASHED_DEFAULT);
+						const styleDouble = this.getStyleValues(pStyle, cStyle, this.cst.STYLE_DOUBLE, this.cst.STYLE_DOUBLE_DEFAULT);
+						const styleStrikethrough = this.getStyleValues(pStyle, cStyle, this.cst.STYLE_STRIKETHROUGH, this.cst.STYLE_STRIKETHROUGH_DEFAULT);
 
-						//const lineColor = this.getValueStatus(style, mxIBMShapeBase.prototype.cst.LINE_COLOR);
-                                                //const fillColor = this.getValueStatus(style, mxIBMShapeBase.prototype.cst.FILL_COLOR);
-                                                //const fontColor = this.getValueStatus(style, mxIBMShapeBase.prototype.cst.FONT_COLOR);
-                                                //const badgeColor = this.getValueStatus(style, mxIBMShapeBase.prototype.cst.BADGE_COLOR);
-						const lineColor = this.getValueStatus(pStyle, cStyle, this.cst.LINE_COLOR, this.cst.LINE_COLOR_DEFAULT);
-        					const fillColor = this.getValueStatus(pStyle, cStyle, this.cst.FILL_COLOR, this.cst.FILL_COLOR_DEFAULT);
-        					const fontColor = this.getValueStatus(pStyle, cStyle, this.cst.FONT_COLOR, this.cst.FONT_COLOR_DEFAULT);
-        					const badgeColor = this.getValueStatus(pStyle, cStyle, this.cst.BADGE_COLOR, this.cst.BADGE_COLOR_DEFAULT);
+						//const lineColor = this.getStyleValues(style, mxIBMShapeBase.prototype.cst.LINE_COLOR);
+                                                //const fillColor = this.getStyleValues(style, mxIBMShapeBase.prototype.cst.FILL_COLOR);
+                                                //const fontColor = this.getStyleValues(style, mxIBMShapeBase.prototype.cst.FONT_COLOR);
+                                                //const badgeColor = this.getStyleValues(style, mxIBMShapeBase.prototype.cst.BADGE_COLOR);
+						const lineColor = this.getStyleValues(pStyle, cStyle, this.cst.LINE_COLOR, this.cst.LINE_COLOR_DEFAULT);
+        					const fillColor = this.getStyleValues(pStyle, cStyle, this.cst.FILL_COLOR, this.cst.FILL_COLOR_DEFAULT);
+        					const fontColor = this.getStyleValues(pStyle, cStyle, this.cst.FONT_COLOR, this.cst.FONT_COLOR_DEFAULT);
+        					const badgeColor = this.getStyleValues(pStyle, cStyle, this.cst.BADGE_COLOR, this.cst.BADGE_COLOR_DEFAULT);
 
                                                 var colorChanged = lineColor.isChanged || fillColor.isChanged || fontColor.isChanged || badgeColor.isChanged;
                                                 if (colorChanged)
