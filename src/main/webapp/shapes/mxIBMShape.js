@@ -313,18 +313,35 @@ mxIBMShapeBase.prototype.getStylesStr = function(stylesObj, stylesStr)
 	return stylesStr;
 } 
 
-// Change icon using switch statement in ibmIcons when switching between logical and prescribed.
-mxIBMShapeBase.prototype.switchIcon = function(shapeType, shapeLayout)
+// Remove categories leaving only icons.
+mxIBMShapeBase.prototype.flattenIcons = function(icons)
 {
-	/* In progress.
-	console.log(this.state.cell.getAttribute('Icon-Name',null));
-	this.state.cell.setAttribute('Icon-Name','ibm-cloud');
+	let flatIcons = {};
+	for (let categoryKey in icons)
+	{       
+		let category = icons[categoryKey];
+		for (let iconKey in category)
+			flatIcons[iconKey] = category[iconKey];
+	}
+	return flatIcons;
+}
 
-	if (previousType.slice(-1) === 'l' && currentType.slice(-1) === 'p')
-		// Lookup logical icon in ibmIcons and switch to prescribed icon if available.
-	else if (previousType.slice(-1) === 'p' && currentType.slice(-1) === 'l')
-		// Lookup prescribed icon in ibmIcons and switch to logical icon if available.
-	*/
+// Change icon to iconl or iconp if available when changing between logical and prescribed shapes.
+mxIBMShapeBase.prototype.changeIcon = function(shapeType)
+{
+	let changed = shapeType.isChanged;
+	if (!changed)
+		return;
+
+	let icons = this.flattenIcons(ibmIcons.Sidebars.Icons);
+
+	iconKey = 'icon' + shapeType.current.slice(-1);
+
+	iconName = this.state.cell.getAttribute('Icon-Name',null);
+	icon = icons[iconName];
+
+	if (icon[iconKey])
+		this.state.cell.setAttribute('Icon-Name', icon[iconKey]);
 
 	return;
 }
@@ -405,8 +422,8 @@ mxIBMShapeBase.prototype.setLayoutStyle = function(cStyleStr, pStyle, cStyle)
 	var shapeLayout = this.getStyleValues(pStyle, cStyle, this.cst.SHAPE_LAYOUT, this.cst.SHAPE_TYPE_LAYOUT);
 	var hideIcon = this.getStyleValues(pStyle, cStyle, this.cst.HIDE_ICON, this.cst.HIDE_ICON_DEFAULT);
 
-	// Change icon if available when switching between logical and prescribed.
-	this.switchIcon(shapeType, shapeLayout);
+	// Change icon if changing between logical and prescribed.
+	this.changeIcon(shapeType);
 
 	// Get properties corresponding to layout change.
 	var properties = this.getLayoutProperties(shapeType, shapeLayout, hideIcon);
@@ -918,24 +935,14 @@ mxIBMShapeBase.prototype.handleEvents = function()
 					
 					if (isIBMShape || iconImage)
 					{
-						//const shapeType = this.getStyleValues(style, mxIBMShapeBase.prototype.cst.SHAPE_TYPE);
-						//const shapeLayout = this.getStyleValues(style, mxIBMShapeBase.prototype.cst.SHAPE_LAYOUT);
-						//const hideIcon = this.getStyleValues(style, mxIBMShapeBase.prototype.cst.HIDE_ICON);
 						const shapeType = this.getStyleValues(pStyle, cStyle, this.cst.SHAPE_TYPE, this.cst.SHAPE_TYPE_DEFAULT);
 						const shapeLayout = this.getStyleValues(pStyle, cStyle, this.cst.SHAPE_LAYOUT, this.cst.SHAPE_TYPE_LAYOUT);
 						const hideIcon = this.getStyleValues(pStyle, cStyle, this.cst.HIDE_ICON, this.cst.HIDE_ICON_DEFAULT);
 
-						//const styleDashed = this.getStyleValues(style, mxIBMShapeBase.prototype.cst.STYLE_DASHED);
-						//const styleDouble = this.getStyleValues(style, mxIBMShapeBase.prototype.cst.STYLE_DOUBLE);
-						//const styleStrikethrough = this.getStyleValues(style, mxIBMShapeBase.prototype.cst.STYLE_STRIKETHROUGH);
 						const styleDashed = this.getStyleValues(pStyle, cStyle, this.cst.STYLE_DASHED, this.cst.STYLE_DASHED_DEFAULT);
 						const styleDouble = this.getStyleValues(pStyle, cStyle, this.cst.STYLE_DOUBLE, this.cst.STYLE_DOUBLE_DEFAULT);
 						const styleStrikethrough = this.getStyleValues(pStyle, cStyle, this.cst.STYLE_STRIKETHROUGH, this.cst.STYLE_STRIKETHROUGH_DEFAULT);
 
-						//const lineColor = this.getStyleValues(style, mxIBMShapeBase.prototype.cst.LINE_COLOR);
-                                                //const fillColor = this.getStyleValues(style, mxIBMShapeBase.prototype.cst.FILL_COLOR);
-                                                //const fontColor = this.getStyleValues(style, mxIBMShapeBase.prototype.cst.FONT_COLOR);
-                                                //const badgeColor = this.getStyleValues(style, mxIBMShapeBase.prototype.cst.BADGE_COLOR);
 						const lineColor = this.getStyleValues(pStyle, cStyle, this.cst.LINE_COLOR, this.cst.LINE_COLOR_DEFAULT);
         					const fillColor = this.getStyleValues(pStyle, cStyle, this.cst.FILL_COLOR, this.cst.FILL_COLOR_DEFAULT);
         					const fontColor = this.getStyleValues(pStyle, cStyle, this.cst.FONT_COLOR, this.cst.FONT_COLOR_DEFAULT);
@@ -947,7 +954,8 @@ mxIBMShapeBase.prototype.handleEvents = function()
                                                         //var styleNewColor = style.current;
                                                         //var updatedStyle = mxIBMShapeBase.prototype.getColorStyle(styleNewColor, shapeType, shapeLayout, lineColor, fillColor, fontColor, badgeColor);
 							var styleNewColor = cStyleStr;  // COMPAT
-							var updatedStyle = mxIBMShapeBase.prototype.getColorStyle(styleNewColor, pStyle, cStyle);  // COMPAT
+							//var updatedStyle = mxIBMShapeBase.prototype.getColorStyle(styleNewColor, pStyle, cStyle);  // COMPAT
+							var updatedStyle = this.getColorStyle(styleNewColor, pStyle, cStyle);  // COMPAT
                                                         styleNewColor = updatedStyle.style;
                                                         colorChanged = style.current !== styleNewColor;
                                                 }
@@ -958,7 +966,8 @@ mxIBMShapeBase.prototype.handleEvents = function()
 							//var styleNewStyle = style.current;
 							//var updatedStyle = mxIBMShapeBase.prototype.getStyleStyle(styleNewStyle, styleDashed, styleDouble, styleStrikethrough);
 							var styleNewStyle = cStyleStr;  // COMPAT
-							var updatedStyle = mxIBMShapeBase.prototype.getLineStyle(styleNewStyle, pStyle, cStyle);  // COMPAT
+							//var updatedStyle = mxIBMShapeBase.prototype.getLineStyle(styleNewStyle, pStyle, cStyle);  // COMPAT
+							var updatedStyle = this.getLineStyle(styleNewStyle, pStyle, cStyle);  // COMPAT
 							styleNewStyle = updatedStyle.style;
 							// COMPAT styleDashed.current = updatedStyle.styleDashed;
 							// COMPAT styleDouble.current = updatedStyle.styleDouble;
@@ -972,7 +981,8 @@ mxIBMShapeBase.prototype.handleEvents = function()
 							//var styleNew = style.current;
 							//var updatedStyle = mxIBMShapeBase.prototype.getLayoutStyle(styleNew, shapeType, shapeLayout, hideIcon, iconImage);
 							var styleNew = cStyleStr;  // COMPAT
-							var updatedStyle = mxIBMShapeBase.prototype.getLayoutStyle(styleNew, pStyle, cStyle, iconImage);  // COMPAT
+							//var updatedStyle = mxIBMShapeBase.prototype.getLayoutStyle(styleNew, pStyle, cStyle, iconImage);  // COMPAT
+							var updatedStyle = this.getLayoutStyle(styleNew, pStyle, cStyle, iconImage);  // COMPAT
 							styleNew = updatedStyle.style;
 							// COMPAT shapeLayout.current = updatedStyle.shapeLayout.current;
 							needApplyStyle = style.current !== styleNew;
@@ -1659,7 +1669,8 @@ mxIBMShapeBase.prototype.getLayoutStyle = function(cStyleStr, pStyle, cStyle, ic
 		// style = mxUtils.setStyle(style, 'shape', mxIBMShapeBase.prototype.cst.SHAPE);
 
 	//style = mxIBMShapeBase.prototype.setLayoutStyle(style, shapeType, shapeLayout, hideIcon);
-	style = mxIBMShapeBase.prototype.setLayoutStyle(cStyleStr, pStyle, cStyle);  // COMPAT
+	//style = mxIBMShapeBase.prototype.setLayoutStyle(cStyleStr, pStyle, cStyle);  // COMPAT
+	style = this.setLayoutStyle(cStyleStr, pStyle, cStyle);  // COMPAT
 
 	//return {style, shapeLayout};
 	return {style};  // COMPAT
@@ -1669,7 +1680,8 @@ mxIBMShapeBase.prototype.getLayoutStyle = function(cStyleStr, pStyle, cStyle, ic
 mxIBMShapeBase.prototype.getLineStyle = function(cStyleStr, pStyle, cStyle) // COMPAT
 {
 	//style = mxIBMShapeBase.prototype.setStyleStyle(style, styleDashed, styleDouble, styleStrikethrough);
-	style = mxIBMShapeBase.prototype.setLineStyle(cStyleStr, pStyle, cStyle); // COMPAT
+	//style = mxIBMShapeBase.prototype.setLineStyle(cStyleStr, pStyle, cStyle); // COMPAT
+	style = this.setLineStyle(cStyleStr, pStyle, cStyle); // COMPAT
 
 	//return {style, styleDashed, styleDouble, styleStrikethrough};
 	return {style};  // COMPAT
@@ -1677,7 +1689,8 @@ mxIBMShapeBase.prototype.getLineStyle = function(cStyleStr, pStyle, cStyle) // C
 
 mxIBMShapeBase.prototype.getColorStyle = function(cStyleStr, pStyle, cStyle) // COMPAT
 {
-	style = mxIBMShapeBase.prototype.setColorStyle(cStyleStr, pStyle, cStyle); // COMPAT
+	//style = mxIBMShapeBase.prototype.setColorStyle(cStyleStr, pStyle, cStyle); // COMPAT
+	style = this.setColorStyle(cStyleStr, pStyle, cStyle); // COMPAT
 
 	return {style};  // COMPAT
 }
