@@ -359,20 +359,12 @@ mxIBMShapeBase.prototype.getLayoutProperties = function(shapeType, shapeLayout, 
 
 	// Prevent invalid changes.
 	
-	if (shapeType.current.startsWith('group') && shapeLayout.current === 'collapsed')
+	if ((shapeType.previous.startsWith('group') && shapeLayout.current === 'collapsed') ||
+		(shapeType.previous === 'actor' && shapeLayout.current.startsWith('expanded')) ||
+		(shapeType.previous === 'target' && shapeLayout.current === 'expandedStack'))
 	{
-		shapeLayout = 'expanded';
-		properties = 'ibmLayout=expanded;';
-	}
-	else if (shapeType.current === 'actor' && shapeLayout.current.startsWith('expanded'))
-	{
-		shapeLayout = 'collapsed';
-		properties = 'ibmLayout=collapsed;';
-	}
-	else if (shapeType.current === 'target' && shapeLayout.current === 'expandedStack')
-	{
-		shapeLayout = 'expanded';
-		properties = 'ibmLayout=expanded;';
+		properties += 'ibmLayout=' + shapeLayout.previous + ';';
+		return properties;
 	}
 
 	// Get shape-specific properties.
@@ -989,6 +981,7 @@ mxIBMShapeBase.prototype.handleEvents = function()
 						}
 						
 						var needApplyGeo = shapeType.isChanged || shapeLayout.isChanged;
+						//var needApplyGeo = shapeType.isChanged || (shapeLayout.isChanged && needApplyStyle);
 						if (needApplyGeo)
 						{
 							const geoCurrent = evt.properties.change.cell.geometry;
